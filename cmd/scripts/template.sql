@@ -7,7 +7,7 @@ create table users
     login varchar(40) not null,
     first_name varchar(40) null,
     last_name varchar(40) null,
-    birth_date date null,
+    birth_date date default null,
     job_title varchar(100) null,
     city varchar(50) null,
     primary key (user_id)

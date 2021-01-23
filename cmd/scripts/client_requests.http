@@ -1,7 +1,7 @@
 ### Sign up new user
 curl --header "Content-Type: application/json" \
   --request POST \
-  --data '{"pass":"12345","user":{"login":"Batman6","first_name":"Bruce","last_name":"Wayne","birth_date":{"Time":"1976-12-31T00:00:00Z","Valid":false},"job_title":"Senior Crime Investigator","city":null}}' \
+  --data '{"pass":"12345","user":{"login":"Batman5","first_name":"Bruce","last_name":"Wayne","birth_date":{"Time":"1976-12-31T00:00:00Z","Valid":true},"job_title":"Senior Crime Investigator","city":"Gotham"}}' \
   http://localhost:8080/register
 
 ### Login

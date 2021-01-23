@@ -32,7 +32,7 @@ type UserRow struct {
 }
 
 func OpenDB() Database {
-	db, err := sql.Open("mysql", "dev:-@tcp(127.0.0.1:3307)/matester_db")
+	db, err := sql.Open("mysql", "dev:-@tcp(127.0.0.1:3307)/matester_db?parseTime=true")
 	if err != nil {
 		panic(err)
 	}

@@ -1,6 +1,8 @@
 package api
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type User struct {
 	Login     string       `json:"login"`
