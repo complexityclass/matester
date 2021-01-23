@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"matester/pkg/api"
 	"matester/pkg/db"
@@ -28,26 +29,13 @@ func (app *App) Close() {
 
 func (app *App) LoginUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
-	login, pass, ok := r.BasicAuth()
-	if !ok {
-		w.Header().Add("WWW-Authenticate", `Basic realm="Give username and password"`)
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"message": "No basic auth present"}`))
-		return
-	}
-
-	user, err := app.db.AuthorisedUser(login)
-
-	if err != nil || !app.auth.IsAuthorised(pass, user) {
-		w.Header().Add("WWW-Authenticate", `Basic realm="Give username and password"`)
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write([]byte(`{"message": "Invalid username or password"}`))
-		fmt.Printf("%s: %s is wrong", login, pass)
+	user, err := app.checkAuth(w, r)
+	if err != nil {
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	greeting := fmt.Sprintf("%s, logged in to matester! \n", login)
+	greeting := fmt.Sprintf("%s, logged in to matester! \n", user.Login)
 	response := fmt.Sprintf(`"{"meesage": %s"}"`, greeting)
 	w.Write([]byte(response))
 	fmt.Println("Everything is ok!")
@@ -84,4 +72,26 @@ func (app *App) SignUpUser(w http.ResponseWriter, r *http.Request) {
 func (app *App) SignUpUserInternal(user *api.User, pass string) {
 	app.auth.AuthoriseUser(user, pass)
 	app.db.SaveUser(user)
+}
+
+func (app *App) checkAuth(w http.ResponseWriter, r *http.Request) (*api.User, error) {
+	login, pass, ok := r.BasicAuth()
+	if !ok {
+		w.Header().Add("WWW-Authenticate", `Basic realm="Give username and password"`)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"message": "No basic auth present"}`))
+		return nil, errors.New("No credentials")
+	}
+
+	user, err := app.db.AuthorisedUser(login)
+
+	if err != nil || !app.auth.IsAuthorised(pass, user) {
+		w.Header().Add("WWW-Authenticate", `Basic realm="Give username and password"`)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"message": "Invalid username or password"}`))
+		fmt.Printf("%s: %s is wrong", login, pass)
+		return nil, err
+	}
+
+	return user, nil
 }

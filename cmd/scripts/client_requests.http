@@ -3,3 +3,6 @@ curl --header "Content-Type: application/json" \
   --request POST \
   --data '{"pass":"12345","user":{"login":"Batman","first_name":"Bruce","last_name":"Wayne","birth_date":{"Time":"1976-12-31T00:00:00Z","Valid":false},"job_title":"Senior Crime Investigator","city":null}}' \
   http://localhost:8080/register
+
+###
+curl -u Batman:12345 -X GET -H "Content-Type: application/json" http://localhost:8080/
