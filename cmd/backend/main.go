@@ -20,6 +20,7 @@ func main() {
 
 	http.HandleFunc("/", app.LoginUser)
 	http.HandleFunc("/register", app.SignUpUser)
+	http.HandleFunc("/users", app.GetUsersList)
 	fmt.Println("Starting Server at port :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

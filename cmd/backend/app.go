@@ -61,6 +61,12 @@ func (app *App) SignUpUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var user = model.User
+	_, noUser := app.db.GetUserId(user.Login)
+	if noUser == nil {
+		http.Error(w, "user with login already exists", http.StatusConflict)
+		return
+	}
+
 	app.SignUpUserInternal(&user, model.Pass)
 
 	w.WriteHeader(http.StatusOK)
@@ -72,6 +78,25 @@ func (app *App) SignUpUser(w http.ResponseWriter, r *http.Request) {
 func (app *App) SignUpUserInternal(user *api.User, pass string) {
 	app.auth.AuthoriseUser(user, pass)
 	app.db.SaveUser(user)
+}
+
+func (app *App) GetUsersList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	_, err := app.checkAuth(w, r)
+	if err != nil {
+		return
+	}
+
+	var users = app.db.QueryUsersList()
+	b, err := json.Marshal(users)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(b)
 }
 
 func (app *App) checkAuth(w http.ResponseWriter, r *http.Request) (*api.User, error) {

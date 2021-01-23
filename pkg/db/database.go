@@ -13,6 +13,7 @@ type Database interface {
 	AuthorisedUser(login string) (*api.User, error)
 	GetUserId(name string) (int, error)
 	SaveUser(user *api.User)
+	QueryUsersList() []api.User
 	Close()
 }
 
@@ -98,6 +99,26 @@ func (d *DatabaseImpl) SaveUser(user *api.User) {
 		panic(err)
 		fmt.Printf("Can't insert new user auth")
 	}
+}
+
+func (d *DatabaseImpl) QueryUsersList() []api.User {
+	rows, err := d.db.Query("SELECT * FROM users")
+	if err != nil {
+		return make([]api.User, 0)
+	}
+
+	var res []api.User
+	for rows.Next() {
+		var id string
+		var user api.User
+		err = rows.Scan(&id, &user.Login, &user.FirstName, &user.LastName, &user.BirthDate, &user.JobTitle, &user.City)
+		if err != nil {
+			continue
+		}
+		res = append(res, user)
+	}
+
+	return res
 }
 
 func (d *DatabaseImpl) Close() {
