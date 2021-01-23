@@ -9,7 +9,7 @@ import (
 
 type Database interface {
 	Next() Row
-	Credential(login string) AuthRow
+	Credential(login string) (*AuthRow, error)
 	Close()
 }
 
@@ -32,8 +32,8 @@ type UserRow struct {
 	name string
 }
 
-func OpenDB() DatabaseImpl {
-	db, err := sql.Open("mysql", "TODO")
+func OpenDB() Database {
+	db, err := sql.Open("mysql", "dev:root@tcp(127.0.0.1:3307)/matester_db")
 	if err != nil {
 		panic(err)
 	}
@@ -43,19 +43,37 @@ func OpenDB() DatabaseImpl {
 
 	d := DatabaseImpl { Status: false, db: db }
 	d.Status = true
+	var database Database
+	database = &d
 
-	return d
+	return database
 }
 
 func (d *DatabaseImpl) Next() Row {
 	return Row { "some" }
 }
 
+func (d *DatabaseImpl) ShowTables() string {
+	stm, err := d.db.Prepare("SHOW tables")
+	if err != nil {
+		panic(err)
+	}
+	defer stm.Close()
+
+	var res string
+	err = stm.QueryRow().Scan(&res)
+	if err != nil {
+		panic(err)
+	}
+
+	return res
+}
+
 func (d *DatabaseImpl) Credential(login string) (*AuthRow, error) {
 	if len(login) < 3 {
 		return nil, errors.New("Small login")
 	}
-	stmtId, err := d.db.Prepare("SELECT user_id FROM user WHERE login = ?")
+	stmtId, err := d.db.Prepare("SELECT user_id FROM users WHERE login = ?")
 	if err != nil {
 		return nil, errors.New("No such user")
 	}
