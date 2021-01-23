@@ -1,4 +1,5 @@
 drop table if exists auth;
+drop table if exists friends;
 drop table if exists users;
 
 create table users
@@ -20,6 +21,16 @@ create table auth
     token varchar(100) not null,
     primary key(id),
     foreign key (user_id) references users(user_id) on delete cascade
+);
+
+create table friends 
+(
+    id int not null auto_increment,
+    fst int,
+    snd int,
+    primary key(id),
+    foreign key (fst) references users(user_id) on delete cascade,
+    foreign key (snd) references users(user_id) on delete cascade
 );
 
 show tables;

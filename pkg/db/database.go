@@ -6,6 +6,7 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"matester/pkg/api"
+	"os"
 	"time"
 )
 
@@ -13,7 +14,9 @@ type Database interface {
 	AuthorisedUser(login string) (*api.User, error)
 	GetUserId(name string) (int, error)
 	SaveUser(user *api.User)
+	SaveFriend(userId int, friendId int) error
 	QueryUsersList() []api.User
+	QueryFriendsList(userId int) []api.User
 	Close()
 }
 
@@ -32,7 +35,12 @@ type UserRow struct {
 }
 
 func OpenDB() Database {
-	db, err := sql.Open("mysql", "dev:-@tcp(127.0.0.1:3307)/matester_db?parseTime=true")
+	dataSourceName := os.Getenv("MATESTER_DB")
+	if dataSourceName == "" {
+		panic("No db source!")
+	}
+
+	db, err := sql.Open("mysql", dataSourceName)
 	if err != nil {
 		panic(err)
 	}
@@ -101,24 +109,36 @@ func (d *DatabaseImpl) SaveUser(user *api.User) {
 	}
 }
 
+func (d *DatabaseImpl) SaveFriend(userId int, friendId int) error {
+	addStmt, err := d.db.Prepare("INSERT INTO friends(fst, snd) values (?, ?)")
+	if err != nil {
+		return err
+	}
+	defer addStmt.Close()
+	_, err = addStmt.Exec(userId, friendId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (d *DatabaseImpl) QueryUsersList() []api.User {
 	rows, err := d.db.Query("SELECT * FROM users")
 	if err != nil {
 		return make([]api.User, 0)
 	}
 
-	var res []api.User
-	for rows.Next() {
-		var id string
-		var user api.User
-		err = rows.Scan(&id, &user.Login, &user.FirstName, &user.LastName, &user.BirthDate, &user.JobTitle, &user.City)
-		if err != nil {
-			continue
-		}
-		res = append(res, user)
+	return d.rowsToUsers(rows)
+}
+
+func (d *DatabaseImpl) QueryFriendsList(userId int) []api.User {
+	rows, err := d.db.Query("SELECT u.* FROM users AS u INNER JOIN ((SELECT DISTINCT fst FROM friends WHERE snd = ?) UNION (SELECT DISTINCT snd FROM friends WHERE fst = ?)) AS fr ON u.user_id = fr.fst", userId, userId)
+	if err != nil {
+		return make([]api.User, 0)
 	}
 
-	return res
+	return d.rowsToUsers(rows)
 }
 
 func (d *DatabaseImpl) Close() {
@@ -139,4 +159,19 @@ func (d *DatabaseImpl) GetUserId(name string) (int, error) {
 	}
 
 	return id, nil
+}
+
+func (d *DatabaseImpl) rowsToUsers(rows *sql.Rows) []api.User {
+	var res []api.User
+	for rows.Next() {
+		var id string
+		var user api.User
+		err := rows.Scan(&id, &user.Login, &user.FirstName, &user.LastName, &user.BirthDate, &user.JobTitle, &user.City)
+		if err != nil {
+			continue
+		}
+		res = append(res, user)
+	}
+
+	return res
 }

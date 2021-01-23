@@ -99,6 +99,62 @@ func (app *App) GetUsersList(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+func (app *App) GetFriendsList(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	user, err := app.checkAuth(w, r)
+	if err != nil {
+		return
+	}
+	var userId, getErr = app.db.GetUserId(user.Login)
+	if getErr != nil {
+		return
+	}
+
+	var users = app.db.QueryFriendsList(userId)
+	b, err := json.Marshal(users)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(b)
+}
+
+func (app *App) LinkFriends(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	if r.Method != "POST" {
+		return
+	}
+	user, err := app.checkAuth(w, r)
+	if err != nil {
+		return
+	}
+
+	r.ParseForm()
+	friends, ok1 := r.Form["user"]
+	if !ok1 || len(friends) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var friendLogin = friends[0]
+
+	userId, userErr := app.db.GetUserId(user.Login)
+	friendId, friendErr := app.db.GetUserId(friendLogin)
+	if userErr != nil || friendErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	saveErr := app.db.SaveFriend(userId, friendId)
+	if saveErr != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
 func (app *App) checkAuth(w http.ResponseWriter, r *http.Request) (*api.User, error) {
 	login, pass, ok := r.BasicAuth()
 	if !ok {

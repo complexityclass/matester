@@ -1,28 +1,40 @@
 package main
 
 import (
-	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
 	"matester/pkg/api"
 	"matester/pkg/db"
 	"net/http"
-	"time"
+	"os"
 )
 
 func main() {
 	var database = db.OpenDB()
 	var app = NewApp(database)
 	defer app.Close()
-	//test(app, database)
-	//testMarshall()
 
+	// Uncomment to enrich with test data
+	//test(app, database)
+
+	var addr = getPortAddr()
 	http.HandleFunc("/", app.LoginUser)
 	http.HandleFunc("/register", app.SignUpUser)
 	http.HandleFunc("/users", app.GetUsersList)
-	fmt.Println("Starting Server at port :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	http.HandleFunc("/friend", app.LinkFriends)
+	http.HandleFunc("/friends", app.GetFriendsList)
+	fmt.Println("Starting Server at port %s", addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
+}
+
+func getPortAddr() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		log.Fatal("$PORT is not set")
+	}
+	fmt.Println("Bind port %s", port)
+
+	return fmt.Sprintf(":%s", port)
 }
 
 func test(app App, database db.Database) {
@@ -38,33 +50,6 @@ func test(app App, database db.Database) {
 		}
 		fmt.Printf("%s id is %d pass is %s \n", user.Login, id, mock.pass)
 	}
-}
-
-func testMarshall() {
-	var fname = "Bruce"
-	var lname = "Wayne"
-	var layoutISO = "2006-01-02"
-	t, _ := time.Parse(layoutISO, "1976-12-31")
-	var jobTitle = "Senior Crime Investigator"
-	user := api.User{
-		Login:     "Batman",
-		FirstName: &fname,
-		LastName:  &lname,
-		BirthDate: sql.NullTime{
-			Time:  t,
-			Valid: false,
-		},
-		JobTitle: &jobTitle,
-		City:     nil,
-		Token:    "",
-	}
-
-	b, err := json.Marshal(user)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println(string(b))
 }
 
 type Mock struct {

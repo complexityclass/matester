@@ -1,1 +1,1 @@
-web: cmd/backend/main
+web: ./app $PORT
