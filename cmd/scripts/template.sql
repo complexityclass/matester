@@ -1,5 +1,25 @@
-create table user(user_id int not null auto_increment, login varchar(40) not null, primary key (user_id));
+drop table if exists auth;
+drop table if exists users;
 
-create table auth (id int not null auto_increment, user_id int, pass_hash char(32) not null, pass_salt char(8) not null, primary key(id), foreign key (user_id) references user(user_id) on delete cascade);
+create table users
+(
+    user_id int not null auto_increment,
+    login varchar(40) not null,
+    first_name varchar(40) null,
+    last_name varchar(40) null,
+    birth_date date null,
+    job_title varchar(100) null,
+    city varchar(50) null,
+    primary key (user_id)
+);
 
-insert into auth(user_id, pass_hash, pass_salt) values (1, 'cb7b71b180c1746a142a0d93b9d063de', '12345678');
+create table auth
+(
+    id int not null auto_increment,
+    user_id int,
+    token varchar(100) not null,
+    primary key(id),
+    foreign key (user_id) references users(user_id) on delete cascade
+);
+
+show tables;

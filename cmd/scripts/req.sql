@@ -1,0 +1,1 @@
+INSERT INTO user(login, first_name, last_name, birth_date, job_title, city) values (?, ?, ?, ?, ?, ?);

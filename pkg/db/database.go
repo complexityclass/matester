@@ -2,38 +2,36 @@ package db
 
 import (
 	"database/sql"
-	"time"
-	_ "github.com/go-sql-driver/mysql"
 	"errors"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	"matester/pkg/api"
+	"time"
 )
 
 type Database interface {
-	Next() Row
-	Credential(login string) (*AuthRow, error)
+	AuthorisedUser(login string) (*api.User, error)
+	GetUserId(name string) (int, error)
+	SaveUser(user *api.User)
 	Close()
 }
 
 type DatabaseImpl struct {
 	Status bool
-	db *sql.DB
+	db     *sql.DB
 }
 
 type Row struct {
 	Value string
 }
 
-type AuthRow struct {
-	Pass string
-	Salt string
-}
-
 type UserRow struct {
-	Id int
+	Id   int
 	name string
 }
 
 func OpenDB() Database {
-	db, err := sql.Open("mysql", "dev:root@tcp(127.0.0.1:3307)/matester_db")
+	db, err := sql.Open("mysql", "dev:-@tcp(127.0.0.1:3307)/matester_db")
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +39,7 @@ func OpenDB() Database {
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(10)
 
-	d := DatabaseImpl { Status: false, db: db }
+	d := DatabaseImpl{Status: false, db: db}
 	d.Status = true
 	var database Database
 	database = &d
@@ -49,51 +47,75 @@ func OpenDB() Database {
 	return database
 }
 
-func (d *DatabaseImpl) Next() Row {
-	return Row { "some" }
-}
-
-func (d *DatabaseImpl) ShowTables() string {
-	stm, err := d.db.Prepare("SHOW tables")
+func (d *DatabaseImpl) AuthorisedUser(login string) (*api.User, error) {
+	userId, err := d.GetUserId(login)
 	if err != nil {
-		panic(err)
-	}
-	defer stm.Close()
-
-	var res string
-	err = stm.QueryRow().Scan(&res)
-	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return res
-}
-
-func (d *DatabaseImpl) Credential(login string) (*AuthRow, error) {
-	if len(login) < 3 {
-		return nil, errors.New("Small login")
-	}
-	stmtId, err := d.db.Prepare("SELECT user_id FROM users WHERE login = ?")
-	if err != nil {
-		return nil, errors.New("No such user")
-	}
-	defer stmtId.Close()
-
-	stmtOut, err := d.db.Prepare("SELECT pass_hash, pass_salt FROM auth WHERE user_id = ?")
+	stmtOut, err := d.db.Prepare("SELECT token FROM auth WHERE user_id = ?")
 	if err != nil {
 		return nil, errors.New("No user credentials")
 	}
 	defer stmtOut.Close()
 
-	var ar AuthRow
-	err = stmtOut.QueryRow(1).Scan(&ar.Pass, &ar.Salt)
+	var token string
+	err = stmtOut.QueryRow(userId).Scan(&token)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	return &ar, nil
+	return &api.User{
+		Login: login,
+		Token: token,
+	}, nil
+}
+
+func (d *DatabaseImpl) SaveUser(user *api.User) {
+	userStmt, err := d.db.Prepare("INSERT INTO users(login, first_name, last_name, birth_date, job_title, city) values (?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		fmt.Errorf("Can't create insert query for new user")
+		return
+	}
+	defer userStmt.Close()
+	_, err = userStmt.Exec(user.Login, user.FirstName, user.LastName, user.BirthDate, user.JobTitle, user.City)
+	if err != nil {
+		fmt.Printf("Can't insert new user")
+	}
+
+	userId, err := d.GetUserId(user.Login)
+	if err != nil {
+		panic(err)
+	}
+
+	authStmt, err := d.db.Prepare("INSERT INTO auth(user_id, token) values (?, ?)")
+	if err != nil {
+		panic(err)
+	}
+	defer authStmt.Close()
+	_, err = authStmt.Exec(userId, user.Token)
+	if err != nil {
+		panic(err)
+		fmt.Printf("Can't insert new user auth")
+	}
 }
 
 func (d *DatabaseImpl) Close() {
-	d.db.Close();
+	d.db.Close()
+}
+
+func (d *DatabaseImpl) GetUserId(name string) (int, error) {
+	stmtId, err := d.db.Prepare("SELECT user_id FROM users WHERE login = ?")
+	if err != nil {
+		return -1, err
+	}
+	defer stmtId.Close()
+
+	var id int
+	err = stmtId.QueryRow(name).Scan(&id)
+	if err != nil {
+		return -1, errors.New("no such user")
+	}
+
+	return id, nil
 }

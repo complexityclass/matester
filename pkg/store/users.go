@@ -21,12 +21,12 @@ func NewUsersProvider(database db.Database) Users {
 
 func (usersStore *UsersImpl) List(limit int) ([]api.User, error) {
 	var res []api.User
-	for i := 0; i < limit; i++ {
-		row := usersStore.db.Next()
-		res = append(res, api.User{
-			Name: row.Value,
-		})
-	}
+	//for i := 0; i < limit; i++ {
+	//	row := usersStore.db.Next()
+	//	res = append(res, api.User{
+	//		Name: row.Value,
+	//	})
+	//}
 
 	return res, nil
 }

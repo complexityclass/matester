@@ -1,31 +1,58 @@
 package store
 
 import (
-	"matester/pkg/db"
-	"crypto/md5"
-	"fmt"
-	"encoding/hex"
+	"golang.org/x/crypto/bcrypt"
+	"log"
+	"matester/pkg/api"
 )
 
 type AuthValidator interface {
-	IsAuthorised(login string, authRow *db.AuthRow) bool
+	IsAuthorised(pass string, user *api.User) bool
+	AuthoriseUser(user *api.User, pass string)
 }
 
 type AuthValidatorImpl struct {
 }
 
 func NewAuthValidator() AuthValidator {
-	return &AuthValidatorImpl {}
+	return &AuthValidatorImpl{}
 }
 
-func (v *AuthValidatorImpl) IsAuthorised(login string, authRow *db.AuthRow) bool {
-	got := GetMD5Hash(login + authRow.Salt)
-	fmt.Printf("Check %s ? %s", got, authRow.Pass)
-
-	return string(got) == authRow.Pass
+func (v *AuthValidatorImpl) IsAuthorised(pass string, user *api.User) bool {
+	return comparePasswords(user.Token, []byte(pass))
 }
 
-func GetMD5Hash(text string) string {
-	hash := md5.Sum([]byte(text))
-	return hex.EncodeToString(hash[:])
- }
+func (v *AuthValidatorImpl) AuthoriseUser(user *api.User, pass string) {
+	var pwd = []byte(pass)
+	var hash = hashAndSalt(pwd)
+	user.Token = hash
+}
+
+func hashAndSalt(pwd []byte) string {
+
+	// Use GenerateFromPassword to hash & salt pwd
+	// MinCost is just an integer constant provided by the bcrypt
+	// package along with DefaultCost & MaxCost.
+	// The cost can be any value you want provided it isn't lower
+	// than the MinCost (4)
+	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
+	if err != nil {
+		log.Println(err)
+	}
+	// GenerateFromPassword returns a byte slice so we need to
+	// convert the bytes to a string and return it
+	return string(hash)
+}
+
+func comparePasswords(hashedPwd string, plainPwd []byte) bool {
+	// Since we'll be getting the hashed password from the DB it
+	// will be a string so we'll need to convert it to a byte slice
+	byteHash := []byte(hashedPwd)
+	err := bcrypt.CompareHashAndPassword(byteHash, plainPwd)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+
+	return true
+}
