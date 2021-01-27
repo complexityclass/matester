@@ -5,28 +5,27 @@ import (
 	"matester/pkg/db"
 )
 
-type Users interface {
-	List(limit int) ([]api.User, error)
+type UsersController interface {
+	List(limit int) []api.User
+	Friends(userId int, limit int) []api.User
 }
 
 type UsersImpl struct {
 	db db.Database
 }
 
-func NewUsersProvider(database db.Database) Users {
+func NewUsersController(database db.Database) UsersController {
 	return &UsersImpl{
 		database,
 	}
 }
 
-func (usersStore *UsersImpl) List(limit int) ([]api.User, error) {
-	var res []api.User
-	//for i := 0; i < limit; i++ {
-	//	row := usersStore.db.Next()
-	//	res = append(res, api.User{
-	//		Name: row.Value,
-	//	})
-	//}
+func (usersStore *UsersImpl) List(limit int) []api.User {
+	//TODO: Pagination and limits
+	return usersStore.db.QueryUsersList()
+}
 
-	return res, nil
+func (usersStore *UsersImpl) Friends(userId int, limit int) []api.User {
+	//TODO: Pagination and limits
+	return usersStore.db.QueryFriendsList(userId)
 }

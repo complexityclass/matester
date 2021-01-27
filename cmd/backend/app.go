@@ -7,19 +7,23 @@ import (
 	"matester/pkg/api"
 	"matester/pkg/db"
 	"matester/pkg/store"
+	"math"
 	"net/http"
 )
 
 type App struct {
-	db   db.Database
-	auth store.AuthValidator
+	db         db.Database
+	auth       store.AuthValidator
+	controller store.UsersController
 }
 
 func NewApp(database db.Database) App {
 	var auth = store.NewAuthValidator()
+	var controller = store.NewUsersController(database)
+
 	fmt.Println("Started matester app")
 
-	return App{db: database, auth: auth}
+	return App{db: database, auth: auth, controller: controller}
 }
 
 func (app *App) Close() {
@@ -28,7 +32,6 @@ func (app *App) Close() {
 }
 
 func (app *App) LoginUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
 	user, err := app.checkAuth(w, r)
 	if err != nil {
 		return
@@ -81,13 +84,12 @@ func (app *App) SignUpUserInternal(user *api.User, pass string) {
 }
 
 func (app *App) GetUsersList(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
 	_, err := app.checkAuth(w, r)
 	if err != nil {
 		return
 	}
 
-	var users = app.db.QueryUsersList()
+	var users = app.controller.List(math.MaxInt32)
 	b, err := json.Marshal(users)
 
 	if err != nil {
@@ -100,7 +102,6 @@ func (app *App) GetUsersList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) GetFriendsList(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
 	user, err := app.checkAuth(w, r)
 	if err != nil {
 		return
@@ -110,7 +111,7 @@ func (app *App) GetFriendsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var users = app.db.QueryFriendsList(userId)
+	var users = app.controller.Friends(userId, math.MaxInt32)
 	b, err := json.Marshal(users)
 
 	if err != nil {
@@ -123,7 +124,6 @@ func (app *App) GetFriendsList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) LinkFriends(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
 	if r.Method != "POST" {
 		return
 	}

@@ -13,18 +13,27 @@ func main() {
 	var database = db.OpenDB()
 	var app = NewApp(database)
 	defer app.Close()
+	var mux = http.NewServeMux()
 
 	// Uncomment to enrich with test data
 	//test(app, database)
 
 	var addr = getPortAddr()
-	http.HandleFunc("/", app.LoginUser)
-	http.HandleFunc("/register", app.SignUpUser)
-	http.HandleFunc("/users", app.GetUsersList)
-	http.HandleFunc("/friend", app.LinkFriends)
-	http.HandleFunc("/friends", app.GetFriendsList)
+	mux.Handle("/", commonMiddleware(http.HandlerFunc(app.LoginUser)))
+	mux.Handle("/register", commonMiddleware(http.HandlerFunc(app.SignUpUser)))
+	mux.Handle("/users", commonMiddleware(http.HandlerFunc(app.GetUsersList)))
+	mux.Handle("/friend", commonMiddleware(http.HandlerFunc(app.LinkFriends)))
+	mux.Handle("/friends", commonMiddleware(http.HandlerFunc(app.GetFriendsList)))
 	fmt.Println("Starting Server at port %s", addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+	log.Fatal(http.ListenAndServe(addr, mux))
+}
+
+func commonMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func getPortAddr() string {

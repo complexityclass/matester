@@ -1,17 +1,17 @@
 ### Sign up new user
 curl --header "Content-Type: application/json" \
   --request POST \
-  --data '{"pass":"12345","user":{"login":"Batman9","first_name":"Bruce","last_name":"Wayne","birth_date":{"Time":"1976-12-31T00:00:00Z","Valid":true},"job_title":"Senior Crime Investigator","city":"Gotham"}}' \
+  --data '{"pass":"12345","user":{"login":"Batman123","first_name":"Bruce","last_name":"Wayne","birth_date":{"Time":"1976-12-31T00:00:00Z","Valid":true},"job_title":"Senior Crime Investigator","city":"Gotham"}}' \
   http://localhost:8080/register
 
 ### Login
-curl -u Batman:12345 -X GET -H "Content-Type: application/json" http://localhost:8080/
+curl -u Batman123:12345 -X GET -H "Content-Type: application/json" http://localhost:8080/
 
 ### Get users list
 curl -u Batman:12345 -X GET -H "Content-Type: application/json" http://localhost:8080/users
 
 ### Link friends
-curl -u Batman6:12345 --data "user=Batman9" http://localhost:8080/friend
+curl -u Batman6:12345 --data "user=Batman123" http://localhost:8080/friend
 
 ### Get friends list
 curl -u Batman6:12345 -X GET -H "Content-Type: application/json" http://localhost:8080/friends
