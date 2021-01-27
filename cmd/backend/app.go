@@ -32,18 +32,30 @@ func (app *App) Close() {
 }
 
 func (app *App) LoginUser(w http.ResponseWriter, r *http.Request) {
-	user, err := app.checkAuth(w, r)
+	if (*r).Method == "OPTIONS" {
+		return
+	}
+
+	auth, err := app.checkAuth(w, r)
 	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	user, err := app.db.GetUser(auth.Login)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	b, err := json.Marshal(user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	greeting := fmt.Sprintf("%s, logged in to matester! \n", user.Login)
-	response := fmt.Sprintf(`"{"meesage": %s"}"`, greeting)
-	w.Write([]byte(response))
-	fmt.Println("Everything is ok!")
-
-	return
+	w.Write(b)
 }
 
 type SignUpModel struct {
@@ -83,7 +95,44 @@ func (app *App) SignUpUserInternal(user *api.User, pass string) {
 	app.db.SaveUser(user)
 }
 
+func (app *App) GetUser(w http.ResponseWriter, r *http.Request) {
+	if (*r).Method == "OPTIONS" {
+		return
+	}
+
+	_, err := app.checkAuth(w, r)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	r.ParseForm()
+	users, ok1 := r.Form["user"]
+	if !ok1 || len(users) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var userLogin = users[0]
+	user, err := app.db.GetUser(userLogin)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	b, err := json.Marshal(user)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(b)
+}
+
 func (app *App) GetUsersList(w http.ResponseWriter, r *http.Request) {
+	if (*r).Method == "OPTIONS" {
+		return
+	}
+
 	_, err := app.checkAuth(w, r)
 	if err != nil {
 		return
@@ -102,6 +151,10 @@ func (app *App) GetUsersList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *App) GetFriendsList(w http.ResponseWriter, r *http.Request) {
+	if (*r).Method == "OPTIONS" {
+		return
+	}
+
 	user, err := app.checkAuth(w, r)
 	if err != nil {
 		return

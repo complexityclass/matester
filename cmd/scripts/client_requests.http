@@ -14,4 +14,4 @@ curl -u Batman:12345 -X GET -H "Content-Type: application/json" http://localhost
 curl -u Batman6:12345 --data "user=Batman123" http://localhost:8080/friend
 
 ### Get friends list
-curl -u Batman6:12345 -X GET -H "Content-Type: application/json" http://localhost:8080/friends
+curl -u Batman6:12345 -X GET -H "Content-Type: application/json" https://matester23.herokuapp.com/friends

@@ -13,6 +13,7 @@ import (
 type Database interface {
 	AuthorisedUser(login string) (*api.User, error)
 	GetUserId(name string) (int, error)
+	GetUser(name string) (*api.User, error)
 	SaveUser(user *api.User)
 	SaveFriend(userId int, friendId int) error
 	QueryUsersList() []api.User
@@ -37,7 +38,7 @@ type UserRow struct {
 func OpenDB() Database {
 	dataSourceName := os.Getenv("MATESTER_DB")
 	if dataSourceName == "" {
-		panic("No db source!")
+		fmt.Println("No DB config")
 	}
 
 	db, err := sql.Open("mysql", dataSourceName)
@@ -159,6 +160,16 @@ func (d *DatabaseImpl) GetUserId(name string) (int, error) {
 	}
 
 	return id, nil
+}
+
+func (d *DatabaseImpl) GetUser(name string) (*api.User, error) {
+	rows, err := d.db.Query("SELECT * FROM users where login = ?", name)
+	if err != nil {
+		return nil, err
+	}
+	var users = d.rowsToUsers(rows)
+
+	return &users[0], nil
 }
 
 func (d *DatabaseImpl) rowsToUsers(rows *sql.Rows) []api.User {
