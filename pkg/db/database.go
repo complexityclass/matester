@@ -82,13 +82,13 @@ func (d *DatabaseImpl) AuthorisedUser(login string) (*api.User, error) {
 }
 
 func (d *DatabaseImpl) SaveUser(user *api.User) {
-	userStmt, err := d.db.Prepare("INSERT INTO users(login, first_name, last_name, birth_date, job_title, city) values (?, ?, ?, ?, ?, ?)")
+	userStmt, err := d.db.Prepare("INSERT INTO users(login, first_name, last_name, birth_date, gender, city) values (?, ?, ?, ?, ?, ?)")
 	if err != nil {
 		fmt.Errorf("Can't create insert query for new user")
 		return
 	}
 	defer userStmt.Close()
-	_, err = userStmt.Exec(user.Login, user.FirstName, user.LastName, user.BirthDate, user.JobTitle, user.City)
+	_, err = userStmt.Exec(user.Login, user.FirstName, user.LastName, user.BirthDate, user.Gender, user.City)
 	if err != nil {
 		fmt.Printf("Can't insert new user")
 	}
@@ -177,7 +177,7 @@ func (d *DatabaseImpl) rowsToUsers(rows *sql.Rows) []api.User {
 	for rows.Next() {
 		var id string
 		var user api.User
-		err := rows.Scan(&id, &user.Login, &user.FirstName, &user.LastName, &user.BirthDate, &user.JobTitle, &user.City)
+		err := rows.Scan(&id, &user.Login, &user.FirstName, &user.LastName, &user.BirthDate, &user.Gender, &user.City)
 		if err != nil {
 			continue
 		}

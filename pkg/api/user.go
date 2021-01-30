@@ -9,7 +9,12 @@ type User struct {
 	FirstName *string      `json:"first_name"`
 	LastName  *string      `json:"last_name"`
 	BirthDate sql.NullTime `json:"birth_date"`
-	JobTitle  *string      `json:"job_title"`
+	Gender    *string      `json:"gender"`
 	City      *string      `json:"city"`
 	Token     string       `json:"-"`
+}
+
+type UserProfile struct {
+	User
+	Hobbies []string `json:"hobbies"`
 }
