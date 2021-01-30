@@ -60,7 +60,7 @@ func (app *App) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 type SignUpModel struct {
 	Pass string   `json:"pass"`
-	User api.User `json:"user"`
+	UserProfile api.UserProfile `json:"profile"`
 }
 
 func (app *App) SignUpUser(w http.ResponseWriter, r *http.Request) {
@@ -75,24 +75,27 @@ func (app *App) SignUpUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user = model.User
-	_, noUser := app.db.GetUserId(user.Login)
+	var userProfile = model.UserProfile
+	_, noUser := app.db.GetUserId(userProfile.Login)
 	if noUser == nil {
 		http.Error(w, "user with login already exists", http.StatusConflict)
 		return
 	}
 
-	app.SignUpUserInternal(&user, model.Pass)
+	app.SignUpUserInternal(&userProfile, model.Pass)
 
 	w.WriteHeader(http.StatusOK)
-	greeting := fmt.Sprintf("Hey, %s, welcome to matester! \n", user.Login)
-	response := fmt.Sprintf(`"{"meesage": %s"}"`, greeting)
-	w.Write([]byte(response))
 }
 
-func (app *App) SignUpUserInternal(user *api.User, pass string) {
+func (app *App) SignUpUserInternal(profile *api.UserProfile, pass string) {
+	var user = &profile.User
 	app.auth.AuthoriseUser(user, pass)
 	app.db.SaveUser(user)
+
+	var userId, _ = app.db.GetUserId(user.Login)
+	for _, hobby := range profile.Hobbies {
+		_ = app.db.SaveHobby(hobby, userId)
+	}
 }
 
 func (app *App) GetUser(w http.ResponseWriter, r *http.Request) {
@@ -113,7 +116,7 @@ func (app *App) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var userLogin = users[0]
-	user, err := app.db.GetUser(userLogin)
+	user, err := app.db.GetUserProfile(userLogin)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return

@@ -1,7 +1,7 @@
 ### Sign up new user
 curl --header "Content-Type: application/json" \
   --request POST \
-  --data '{"pass":"12345","user":{"login":"Batman","first_name":"Bruce","last_name":"Wayne","birth_date":{"Time":"1976-12-31T00:00:00Z","Valid":true},"gender":"female","city":"Gotham"}}' \
+  --data '{"pass":"12345","profile":{"login":"Batman234","first_name":"Bruce","last_name":"Wayne","birth_date":{"Time":"1976-12-31T00:00:00Z","Valid":true},"gender":"female","city":"Gotham", "hobbies": ["C++", "Pascal"]}}' \
   http://localhost:8080/register
 
 ### Login
@@ -15,3 +15,6 @@ curl -u Batman:12345 --data "user=Batman123" http://localhost:8080/friend
 
 ### Get friends list
 curl -u Batman:12345 -X GET -H "Content-Type: application/json" http://localhost:8080/friends
+
+### Get user
+curl -u Batman234:12345 -X GET -H "Content-Type: application/json" http://localhost:8080/user?user=Batman234
