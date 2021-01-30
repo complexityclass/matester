@@ -1,5 +1,6 @@
 drop table if exists auth;
 drop table if exists friends;
+drop table if exists user2hobbies;
 drop table if exists users;
 drop table if exists hobbies;
 
