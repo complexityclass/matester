@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { router } from "@/main";
 
 export default {
   namespaced: true,
@@ -18,6 +19,8 @@ export default {
   },
   mutations: {
     setData(state, data) {
+      // console.log('setData'. data);
+      localStorage.setItem('matesterLogin', data.login);
       state.userData.login = data.login;
       state.userData.first_name = data.first_name;
       state.userData.last_name = data.last_name;
@@ -27,8 +30,13 @@ export default {
       state.userData.hobbies = data.hobbies;
     },
     setAuth(state, basicAuth) {
+      // console.log('setAuth', basicAuth);
       state.basicAuth = basicAuth;
-    }
+      localStorage.setItem('matesterBasicAuth', basicAuth);
+    },
+    openProfile() {
+      router.push('/user');
+    },
   },
   getters: {
     userData(state) {
@@ -40,11 +48,14 @@ export default {
   },
   actions: {
     login(context, basicAuth) {
-      return axios.post('https://matester23.herokuapp.com', {}, {
+      // console.log('login in store', basicAuth)
+      axios.post('https://matester23.herokuapp.com', {}, {
         headers: { 'Authorization': basicAuth }
       }).then(authResponse => {
         console.log('Authenticated true', authResponse);
         context.commit('setAuth', basicAuth);
+        context.commit('setData', authResponse.data);
+        context.commit('openProfile');
       }).catch(function(error) {
         console.log('Error on Authentication', error);
       });

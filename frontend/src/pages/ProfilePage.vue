@@ -1,7 +1,9 @@
 <template>
   <div class="page profile-wrapper">
     <div v-if="!isLoaded"> Loaded ...</div>
-    <h1 v-else>HELLO</h1>
+    <div v-else class="user-profile">
+<!--      <div v-for=""></div>-->
+    </div>
   </div>
 </template>
 
@@ -16,29 +18,40 @@ export default {
   },
   data() {
     return {
-      isLoaded: false
+      isLoaded: false,
+      profileData: {}
     }
   },
   computed: {
     basicAuth() {
-      return this.$store.getters['user/basicAuth'];
+      return localStorage.getItem('matesterBasicAuth');
+    },
+    user() {
+      return this.$store.getters['user/userData'].login;
     }
   },
   created() {
     console.log('loaded profile page')
-    axios.get(`https://matester23.herokuapp.com/user?user=${this.user_id}`, {
-      headers: { 'Authorization': this.basicAuth }
-    }).then(userResponse => {
-      console.log('userResponse', userResponse)
-      this.isLoaded = true;
-    })
+    this.getProfile();
   },
   methods: {
-
+    getProfile() {
+      axios.get(`https://matester23.herokuapp.com/user?user=${this.user}`, {
+        headers: { 'Authorization': this.basicAuth }
+      }).then(userResponse => {
+        console.log('userResponse', userResponse)
+        this.profileData = userResponse.data;
+        this.isLoaded = true;
+      })
+    }
   }
 }
 </script>
 
-<style scoped>
-
+<style>
+.page {
+  background-color: #fff;
+  padding: 10px;
+  //min-height: 400px;
+}
 </style>

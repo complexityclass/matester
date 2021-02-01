@@ -4,8 +4,8 @@
     <div class="form__wrapper d-flex-column">
       <form action="#" class="form d-flex-column">
         <div class="form-fields">
-          <input-field v-for="field in fields" :key="field.id" :field-type="field.type" :id="field.id"
-                       :field-name="field.name" @getValue="saveFieldValues"/>
+          <input-field v-for="field in fields" :key="field.id"
+                       :data="field" @getValue="saveFieldValues"/>
           <router-link class="router-link" to="/register">No account?</router-link>
         </div>
         <input class="btn btn-submit" type="button" value="Login" @click="submitForm">
@@ -31,8 +31,8 @@ export default {
     return {
       values: {},
       fields: [
-        { id: 'login', type: 'text', name: 'Login' },
-        { id: 'password', type: 'password', name: 'Password' },
+        { id: 'login', type: 'text', data: {name: 'Login'} },
+        { id: 'password', type: 'password', data: {name: 'Password'} },
       ]
     }
   },
@@ -45,14 +45,15 @@ export default {
         this.values[field.id] = "";
       })
     },
-    saveFieldValues(id, value) {
-      this.values[id] = value;
+    saveFieldValues(data) {
+      // console.log('saveFieldValues', data)
+      this.values[data.id] = data.label;
     },
     submitForm() {
+      // console.log('click login')
       let basicAuth = 'Basic ' + btoa(this.values.login + ':' + this.values.password);
       this.$store.dispatch('user/login', basicAuth).then(res => {
         console.log('dispatch user/login was successful', res);
-        this.$router.push({ path: `/user/${this.values.login}` })
       })
     },
   }

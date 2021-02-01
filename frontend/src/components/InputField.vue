@@ -1,9 +1,9 @@
 <template>
   <div class="input__wrapper">
-    <label class="input-field-label" :for="id">
-      <span>{{ fieldName }}</span>
-      <input class="input-field" :id="id" :type="fieldType" :name="fieldName" autocomplete="off"
-             :placeholder="fieldName" v-model="value">
+    <label class="input-field-label" :for="data.id">
+      <span>{{ data.data.name }}</span>
+      <input class="input-field" :id="data.id" type="text" :name="data.data.name" autocomplete="off"
+             :placeholder="data.data.name" v-model="value">
     </label>
     <span v-if="errorsExist" class="invalid-field">{{ errorText }}</span>
   </div>
@@ -13,9 +13,7 @@
 export default {
   name: 'InputField',
   props: {
-    id: { type: String, required: true },
-    fieldType: { type: String, default: "text" },
-    fieldName: { type: String, default: "" },
+    data: { type: Object },
     errors: { type: Object, default: () => ({}) }
   },
   data() {
@@ -33,7 +31,7 @@ export default {
   },
   watch: {
     value: function() {
-      this.$emit('getValue', this.$props.id, this.value);
+      this.$emit('getValue', { id: this.$props.data.id, label: this.value });
     }
   }
 }
@@ -45,16 +43,16 @@ export default {
   display: flex;
   flex-direction: column;
 }
+
 .input-field-label span {
   align-self: flex-start;
   font-weight: 500;
 }
+
 .input__wrapper {
   margin-top: 15px;
 }
-.input__wrapper:last-child {
-  margin-bottom: 20px;
-}
+
 .input-field {
   font-size: 16px;
   font-family: inherit;
@@ -64,9 +62,9 @@ export default {
   border-radius: 4px;
   transition: 180ms box-shadow ease-in-out;
 }
+
 .input-field:focus {
-  //border-color: hsl(245, 53%, 70%);
-  box-shadow: 0 0 0 1px #6F8BE9;
+//border-color: hsl(245, 53%, 70%); box-shadow: 0 0 0 1px #6F8BE9;
   outline: 2px solid transparent;
 }
 </style>

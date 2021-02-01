@@ -7,7 +7,8 @@ import routes from './pages/index.js'
 import './commonStyles.css'
 import axios from 'axios'
 import stores from './stores/index.js'
-
+import vSelect from 'vue-select'
+Vue.component('v-select', vSelect)
 
 export var router = new VueRouter({
   mode: 'history',
