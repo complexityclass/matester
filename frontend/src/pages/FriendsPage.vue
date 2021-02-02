@@ -2,7 +2,10 @@
   <div>
     <div v-if="isLoaded">
       <h1 class="page-title">Friends Page</h1>
-      <table class="table">
+      <div v-if="title">
+        <h4>{{ title }}</h4>
+      </div>
+      <table v-else class="table">
         <thead>
         <tr>
           <td v-for="thead in td_titles" :key="thead.id">
@@ -16,10 +19,9 @@
             <span>
               {{ thead.id === 'birth_date' ? formatDate(friend[thead.id]['Time']) : friend[thead.id] }}
             </span>
-<!--            add later -->
-<!--            <span class="remove-icon" v-if="thead.id === 'delete_friend'">-->
-<!--              <span v-if="!friends[friend.login]" @click="deleteFriend(friend)">&#10008;</span>-->
-<!--            </span>-->
+            <span class="remove-icon" v-if="thead.id === 'delete_friend'">
+              <span @click="deleteFriend(friend)">&#10008;</span>
+            </span>
           </td>
         </tr>
         </tbody>
@@ -38,6 +40,7 @@ export default {
   name: "FriendsPage",
   data() {
     return {
+      title: '',
       isLoaded: false,
       friends: [],
       td_titles: [
@@ -47,7 +50,7 @@ export default {
         { id: "birth_date", title: 'Birth date' },
         { id: "gender", title: 'Gender' },
         { id: "city", title: 'City' },
-        // { id: "delete_friend", title: 'Delete from friends' },
+        { id: "delete_friend", title: 'Delete from friends' },
       ]
     }
   },
@@ -68,6 +71,9 @@ export default {
         if (friendsResponse.data && friendsResponse.data.length !== 0) {
           this.friends = friendsResponse.data;
           this.isLoaded = true;
+        } else {
+          this.title = 'There are no friends in your list... Choose someone in all users'
+          this.isLoaded = true;
         }
       })
     },
@@ -86,9 +92,14 @@ export default {
 
       return year + '-' + month + '-' + dt;
     },
-    // deleteFriend(user) {
-    //   console.log('delete friend', user);
-    // }
+    deleteFriend(user) {
+      axios.patch(`https://matester23.herokuapp.com/unfriend?user=${user.login}`, {}, {
+        headers: { 'Authorization': this.basicAuth }
+      }).then(() => {
+        let ind = this.friends.findIndex(_user => _user.login === user.login);
+        this.friends.splice(ind, 1);
+      })
+    }
   }
 }
 </script>

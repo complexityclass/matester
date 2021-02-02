@@ -17,8 +17,8 @@
               {{ thead.id === 'birth_date' ? formatDate(user[thead.id]['Time']) : user[thead.id] }}
             </span>
             <span class="add-icon" v-if="thead.id === 'add_friend'">
-              <span v-if="!friends[user.login]" @click="addFriend(user)">&#10010;</span>
-              <span v-if="friends[user.login]">&#10004;</span>
+              <span v-if="!friends.includes(user.login)" @click="addFriend(user)">&#10010;</span>
+              <span v-if="friends.includes(user.login)">&#10004;</span>
             </span>
           </td>
         </tr>
@@ -40,7 +40,7 @@ export default {
     return {
       isLoaded: false,
       users: [],
-      friends: {},
+      friends: [],
       td_titles: [
         { id: "first_name", title: 'First name' },
         { id: "last_name", title: 'Last name' },
@@ -68,7 +68,15 @@ export default {
         console.log('usersResponse', usersResponse)
         if (usersResponse.data && usersResponse.data.length !== 0) {
           this.users = usersResponse.data;
-          this.isLoaded = true;
+          axios.get(`https://matester23.herokuapp.com/friends`, {
+            headers: { 'Authorization': this.basicAuth }
+          }).then(friendsResponse => {
+            console.log('friendsResponse', friendsResponse);
+            friendsResponse.data.forEach(obj => {
+              this.friends.push(obj.login);
+            })
+            this.isLoaded = true;
+          })
         }
       })
     },
@@ -88,8 +96,15 @@ export default {
       return year + '-' + month + '-' + dt;
     },
     addFriend(user) {
-      console.log('add friend', user);
-      this.friends[`${user.login}`] = true;
+      if (!this.friends.includes(user.login)) {
+        console.log('add friend', user);
+        axios.post(`https://matester23.herokuapp.com/friend?user=${user.login}`, {}, {
+          headers: { 'Authorization': this.basicAuth }
+        }).then(res => {
+          console.log('resss', res);
+          this.friends.push(user.login);
+        })
+      }
     }
   }
 }
