@@ -211,6 +211,38 @@ func (app *App) LinkFriends(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *App) UnLinkFriends(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "PATCH" {
+		return
+	}
+	user, err := app.checkAuth(w, r)
+	if err != nil {
+		return
+	}
+
+	r.ParseForm()
+	friends, ok1 := r.Form["user"]
+	if !ok1 || len(friends) == 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var friendLogin = friends[0]
+
+	userId, userErr := app.db.GetUserId(user.Login)
+	friendId, friendErr := app.db.GetUserId(friendLogin)
+	if userErr != nil || friendErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	saveErr := app.db.DeleteFriend(userId, friendId)
+	if saveErr != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
 func (app *App) checkAuth(w http.ResponseWriter, r *http.Request) (*api.User, error) {
 	login, pass, ok := r.BasicAuth()
 	if !ok {

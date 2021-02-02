@@ -17,6 +17,7 @@ type Database interface {
 	GetUserProfile(name string) (*api.UserProfile, error)
 	SaveUser(user *api.User)
 	SaveFriend(userId int, friendId int) error
+	DeleteFriend(userId int, friendId int) error
 	QueryUsersList() []api.User
 	QueryFriendsList(userId int) []api.User
 	SaveHobby(hobby string, userId int) error
@@ -142,6 +143,20 @@ func (d *DatabaseImpl) SaveFriend(userId int, friendId int) error {
 	}
 	defer addStmt.Close()
 	_, err = addStmt.Exec(userId, friendId)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *DatabaseImpl)DeleteFriend(userId int, friendId int) error {
+	addStmt, err := d.db.Prepare("DELETE FROM friends WHERE (fst = ? AND snd = ?) OR (fst = ? AND snd = ?)")
+	if err != nil {
+		return err
+	}
+	defer addStmt.Close()
+	_, err = addStmt.Exec(userId, friendId, friendId, userId)
 	if err != nil {
 		return err
 	}

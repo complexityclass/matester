@@ -21,6 +21,7 @@ func main() {
 	mux.Handle("/user", commonMiddleware(http.HandlerFunc(app.GetUser)))
 	mux.Handle("/friend", commonMiddleware(http.HandlerFunc(app.LinkFriends)))
 	mux.Handle("/friends", commonMiddleware(http.HandlerFunc(app.GetFriendsList)))
+	mux.Handle("/unfriend", commonMiddleware(http.HandlerFunc(app.UnLinkFriends)))
 	fmt.Println("Starting Server at port %s", addr)
 
 	log.Fatal(http.ListenAndServe(addr, mux))
